@@ -1,0 +1,6 @@
+Family_ID,Student1_AdmNo,Student1_Name,Class,Section,Student2_AdmNo,Student2_Name,Parent1_Name,Parent2_Name,Phone,Email
+FAM-2025-0001,A12345,Rahul Kumar,10,A,,,Mr. Suresh Kumar,Mrs. Anita Kumar,9876543210,suresh@test.com
+FAM-2025-0002,A12346,Priya Sharma,9,B,A12399,Rohan Sharma,Mr. Amit Sharma,Mrs. Neha Sharma,9876543211,amit@test.com
+FAM-2025-0003,A12347,Anjali Patel,11,C,,,Mr. Rajesh Patel,Mrs. Meera Patel,9876543212,rajesh@test.com
+FAM-2025-0004,A12348,Vikram Singh,8,A,,,Mr. Harpreet Singh,Mrs. Simran Singh,9876543213,harpreet@test.com
+FAM-2025-0005,A12349,Sneha Reddy,10,B,,,Mr. Venkat Reddy,Mrs. Lakshmi Reddy,9876543214,venkat@test.com

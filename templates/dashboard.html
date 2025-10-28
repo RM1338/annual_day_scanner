@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - Avatarit 2025</title>
+
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
+    <link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', filename='favicon.png') }}">
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #1e3a5f 0%, #2c1e4a 50%, #1a2332 100%);
+            min-height: 100vh;
+            padding: 20px;
+            position: relative;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            background:
+                radial-gradient(circle at 10% 20%, rgba(88, 166, 255, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 90% 80%, rgba(147, 112, 219, 0.15) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 1;
+        }
+
+        .dashboard-header {
+            background: rgba(30, 41, 59, 0.8);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 24px;
+            margin-bottom: 24px;
+            box-shadow:
+                0 8px 32px rgba(0, 0, 0, 0.4),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .header-icon {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, #4f9aff 0%, #7c3aed 100%);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 8px 24px rgba(79, 154, 255, 0.3);
+        }
+
+        .header-icon i {
+            font-size: 24px;
+            color: white;
+        }
+
+        .header-title h1 {
+            font-size: 24px;
+            font-weight: 700;
+            color: #ffffff;
+            margin-bottom: 4px;
+        }
+
+        .header-title p {
+            font-size: 13px;
+            color: #94a3b8;
+            font-weight: 500;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn {
+            padding: 11px 18px;
+            border: none;
+            border-radius: 10px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #4f9aff 0%, #7c3aed 100%);
+            color: white;
+            box-shadow: 0 4px 16px rgba(79, 154, 255, 0.3);
+        }
+
+        .btn-secondary {
+            background: rgba(30, 41, 59, 0.6);
+            color: #cbd5e1;
+        }
+
+        .btn-danger {
+            background: rgba(239, 68, 68, 0.2);
+            color: #f87171;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .stat-card {
+            background: rgba(30, 41, 59, 0.8);
+            backdrop-filter: blur(20px);
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow:
+                0 4px 20px rgba(0, 0, 0, 0.3),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-4px);
+        }
+
+        .stat-card.primary::before { background: linear-gradient(135deg, #4f9aff 0%, #7c3aed 100%); }
+        .stat-card.success::before { background: linear-gradient(135deg, #10b981 0%, #059669 100%); }
+        .stat-card.info::before { background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); }
+        .stat-card.warning::before { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); }
+
+        .stat-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 16px;
+        }
+
+        .stat-icon-wrapper {
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .stat-card.primary .stat-icon-wrapper {
+            background: linear-gradient(135deg, rgba(79, 154, 255, 0.2) 0%, rgba(124, 58, 237, 0.2) 100%);
+        }
+        .stat-card.success .stat-icon-wrapper {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.2) 0%, rgba(5, 150, 105, 0.2) 100%);
+        }
+        .stat-card.info .stat-icon-wrapper {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.2) 0%, rgba(37, 99, 235, 0.2) 100%);
+        }
+        .stat-card.warning .stat-icon-wrapper {
+            background: linear-gradient(135deg, rgba(245, 158, 11, 0.2) 0%, rgba(217, 119, 6, 0.2) 100%);
+        }
+
+        .stat-icon-wrapper i {
+            font-size: 22px;
+        }
+
+        .stat-card.primary .stat-icon-wrapper i { color: #4f9aff; }
+        .stat-card.success .stat-icon-wrapper i { color: #10b981; }
+        .stat-card.info .stat-icon-wrapper i { color: #3b82f6; }
+        .stat-card.warning .stat-icon-wrapper i { color: #f59e0b; }
+
+        .stat-number {
+            font-size: 36px;
+            font-weight: 800;
+            color: #ffffff;
+            line-height: 1;
+            margin-bottom: 6px;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #94a3b8;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .table-container {
+            background: rgba(30, 41, 59, 0.8);
+            backdrop-filter: blur(20px);
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow:
+                0 4px 20px rgba(0, 0, 0, 0.3),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            overflow-x: auto;
+        }
+
+        .table-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .table-header h2 {
+            font-size: 18px;
+            font-weight: 700;
+            color: #ffffff;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .live-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 12px;
+            background: rgba(16, 185, 129, 0.2);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            color: #10b981;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .live-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: #10b981;
+            animation: pulse-dot 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse-dot {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+            50% { box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
+        }
+
+        table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0 6px;
+            min-width: 600px;
+        }
+
+        thead th {
+            background: rgba(15, 23, 42, 0.5);
+            padding: 12px 14px;
+            text-align: left;
+            font-size: 11px;
+            font-weight: 700;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        thead th:first-child { border-radius: 10px 0 0 10px; }
+        thead th:last-child { border-radius: 0 10px 10px 0; }
+
+        tbody tr {
+            background: rgba(15, 23, 42, 0.3);
+            transition: all 0.2s ease;
+        }
+
+        tbody tr:hover {
+            background: rgba(15, 23, 42, 0.5);
+        }
+
+        tbody td {
+            padding: 14px;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            font-size: 13px;
+            color: #e2e8f0;
+        }
+
+        tbody td:first-child {
+            border-left: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 10px 0 0 10px;
+            font-weight: 600;
+        }
+
+        tbody td:last-child {
+            border-right: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 0 10px 10px 0;
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 5px 10px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .badge.entry {
+            background: rgba(16, 185, 129, 0.2);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            color: #10b981;
+        }
+
+        .badge.exit {
+            background: rgba(59, 130, 246, 0.2);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            color: #3b82f6;
+        }
+
+        .gate-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 4px 8px;
+            background: rgba(100, 116, 139, 0.2);
+            border: 1px solid rgba(100, 116, 139, 0.3);
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 600;
+            color: #94a3b8;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 50px 20px;
+            color: #64748b;
+        }
+
+        .empty-state i {
+            font-size: 40px;
+            margin-bottom: 12px;
+            opacity: 0.5;
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 12px;
+            }
+
+            .header-content {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .header-actions {
+                width: 100%;
+                flex-direction: column;
+            }
+
+            .btn {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="dashboard-header">
+            <div class="header-content">
+                <div class="header-left">
+                    <div class="header-icon">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <div class="header-title">
+                        <h1>Admin Dashboard</h1>
+                        <p>Avatarit 2025 - Real-time Monitoring</p>
+                    </div>
+                </div>
+                <div class="header-actions">
+                    <button class="btn btn-secondary" onclick="window.location.href='/'">
+                        <i class="fas fa-qrcode"></i>
+                        Scanner
+                    </button>
+                    <button class="btn btn-danger" onclick="clearData()">
+                        <i class="fas fa-trash-alt"></i>
+                        Clear Data
+                    </button>
+                    <button class="btn btn-primary" onclick="window.location.href='/logout'">
+                        <i class="fas fa-sign-out-alt"></i>
+                        Logout
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card primary">
+                <div class="stat-header">
+                    <div>
+                        <div class="stat-number" id="currentInside">0</div>
+                        <div class="stat-label">Currently Inside</div>
+                    </div>
+                    <div class="stat-icon-wrapper">
+                        <i class="fas fa-users"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="stat-card success">
+                <div class="stat-header">
+                    <div>
+                        <div class="stat-number" id="totalEntries">0</div>
+                        <div class="stat-label">Total Entries</div>
+                    </div>
+                    <div class="stat-icon-wrapper">
+                        <i class="fas fa-arrow-right-to-bracket"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="stat-card info">
+                <div class="stat-header">
+                    <div>
+                        <div class="stat-number" id="totalExits">0</div>
+                        <div class="stat-label">Total Exits</div>
+                    </div>
+                    <div class="stat-icon-wrapper">
+                        <i class="fas fa-arrow-right-from-bracket"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="stat-card warning">
+                <div class="stat-header">
+                    <div>
+                        <div class="stat-number" id="totalScans">0</div>
+                        <div class="stat-label">Total Scans</div>
+                    </div>
+                    <div class="stat-icon-wrapper">
+                        <i class="fas fa-qrcode"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="table-container">
+            <div class="table-header">
+                <h2>
+                    <i class="fas fa-clock-rotate-left"></i>
+                    Recent Activity
+                </h2>
+                <div class="live-badge">
+                    <span class="live-dot"></span>
+                    Auto-updating
+                </div>
+            </div>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>Family ID</th>
+                        <th>Student</th>
+                        <th>Class</th>
+                        <th>Type</th>
+                        <th>Gate</th>
+                        <th>Timestamp</th>
+                    </tr>
+                </thead>
+                <tbody id="recentBody">
+                    <tr>
+                        <td colspan="6" class="empty-state">
+                            <i class="fas fa-inbox"></i>
+                            <p>No activity yet. Waiting for scans...</p>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        function updateDashboard() {
+            fetch('/api/stats')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('currentInside').textContent = data.current_inside;
+                    document.getElementById('totalEntries').textContent = data.total_entries;
+                    document.getElementById('totalExits').textContent = data.total_exits;
+                    document.getElementById('totalScans').textContent = data.total_entries + data.total_exits;
+
+                    const tbody = document.getElementById('recentBody');
+                    if (data.recent_scans.length === 0) {
+                        tbody.innerHTML = `
+                            <tr>
+                                <td colspan="6" class="empty-state">
+                                    <i class="fas fa-inbox"></i>
+                                    <p>No activity yet. Waiting for scans...</p>
+                                </td>
+                            </tr>`;
+                    } else {
+                        tbody.innerHTML = data.recent_scans.map(scan => {
+                            const typeIcon = scan.type === 'entry' ?
+                                '<i class="fas fa-arrow-right"></i>' :
+                                '<i class="fas fa-arrow-left"></i>';
+
+                            return `
+                            <tr>
+                                <td>${scan.family_id}</td>
+                                <td>${scan.student || 'N/A'}</td>
+                                <td>${scan.class || 'N/A'}</td>
+                                <td><span class="badge ${scan.type}">${typeIcon} ${scan.type.toUpperCase()}</span></td>
+                                <td><span class="gate-badge"><i class="fas fa-door-open"></i> Gate ${scan.gate}</span></td>
+                                <td>${scan.time}</td>
+                            </tr>`;
+                        }).join('');
+                    }
+                });
+        }
+
+        function clearData() {
+            if (confirm('⚠️ This will permanently delete all scan records. Continue?')) {
+                fetch('/api/reset', { method: 'POST' })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            alert('✅ All data cleared!');
+                            updateDashboard();
+                        } else {
+                            alert('❌ Error: ' + data.error);
+                        }
+                    })
+                    .catch(error => {
+                        alert('❌ Connection error');
+                    });
+            }
+        }
+
+        updateDashboard();
+        setInterval(updateDashboard, 3000);
+    </script>
+</body>
+</html>
