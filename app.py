@@ -245,8 +245,7 @@ def reset():
     conn.close()
     return jsonify({'success': True, 'message': 'All scans cleared'})
 
-
 if __name__ == '__main__':
     init_db()
     load_sample_data()
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    app.run(debug=False, host='0.0.0.0', port=5000)
