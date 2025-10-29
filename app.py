@@ -5,10 +5,12 @@ from datetime import datetime
 import os
 
 app = Flask(__name__)
+
+# Secret key for sessions
 app.secret_key = 'your-secret-key-change-this-to-something-random-123456'
 
-# Dashboard password
-DASHBOARD_PASSWORD = "admin2025"
+# Dashboard password (change this!)
+DASHBOARD_PASSWORD = "#CKMSannual-day2025.adminpass"
 
 
 def init_db():
@@ -27,6 +29,7 @@ def init_db():
                   phone TEXT,
                   data_json TEXT)''')
 
+    # Updated scans table with person_count column
     c.execute('''CREATE TABLE IF NOT EXISTS scans
                  (id INTEGER PRIMARY KEY AUTOINCREMENT,
                   family_id TEXT,
@@ -56,6 +59,10 @@ def load_sample_data():
          "Mr. Amit Sharma, Mrs. Neha Sharma", "9876543211", "{}"),
         ("FAM-2025-0003", "Anjali Patel", "A12347", "11", "C", "", "",
          "Mr. Rajesh Patel, Mrs. Meera Patel", "9876543212", "{}"),
+        ("FAM-2025-0004", "Vikram Singh", "A12348", "8", "A", "", "",
+         "Mr. Harpreet Singh, Mrs. Simran Singh", "9876543213", "{}"),
+        ("FAM-2025-0005", "Sneha Reddy", "A12349", "10", "B", "", "",
+         "Mr. Venkat Reddy, Mrs. Lakshmi Reddy", "9876543214", "{}")
     ]
 
     c.executemany('''INSERT INTO families VALUES (?,?,?,?,?,?,?,?,?,?)''', families)
@@ -64,19 +71,19 @@ def load_sample_data():
     print("✅ Sample data loaded!")
 
 
-# Scanner page
+# Scanner page (public - no password needed)
 @app.route('/')
 def index():
     return render_template('scanner.html')
 
 
-# Dashboard login
+# Dashboard login page
 @app.route('/dashboard-login')
 def dashboard_login():
     return render_template('dashboard_login.html')
 
 
-# Dashboard auth
+# Dashboard login verification
 @app.route('/dashboard-auth', methods=['POST'])
 def dashboard_auth():
     try:
@@ -90,7 +97,7 @@ def dashboard_auth():
         return jsonify({'success': False, 'error': str(e)}), 500
 
 
-# Dashboard
+# Dashboard page (protected)
 @app.route('/dashboard')
 def dashboard():
     if not session.get('dashboard_access'):
@@ -105,11 +112,12 @@ def logout():
     return redirect(url_for('index'))
 
 
-# Scan QR code - AUTO GATE ASSIGNMENT (NO MANUAL SELECTION)
+# Scan QR code (WITH PERSON COUNTING + AUTO GATE ASSIGNMENT)
 @app.route('/scan', methods=['POST'])
 def scan():
     try:
         qr_data = request.json.get('qr_data')
+        # REMOVED: gate = request.json.get('gate', '1')
 
         data = json.loads(qr_data)
         family_id = data['family_id']
@@ -117,52 +125,55 @@ def scan():
         conn = sqlite3.connect('attendance.db')
         c = conn.cursor()
 
-        # Check last scan to determine entry or exit
-        c.execute('''SELECT scan_type FROM scans 
+        # Check last scan
+        c.execute('''SELECT scan_type, timestamp FROM scans 
                      WHERE family_id=? 
                      ORDER BY id DESC LIMIT 1''', (family_id,))
         last_scan = c.fetchone()
 
-        # Calculate number of people
+        # Calculate number of people in this family
         num_people = 0
+
+        # Count students
         if 'student1' in data and data['student1']:
             num_people += 1
         if 'student2' in data and data['student2']:
             num_people += 1
+
+        # Count parents (from the parents array)
         if 'parents' in data and data['parents']:
             num_people += len(data['parents'])
 
-        # Auto-determine entry/exit and assign gate
+        # AUTO-DETERMINE scan type AND gate
         if not last_scan or last_scan[0] == 'exit':
-            # First scan or last was exit → This is ENTRY
             scan_type = 'entry'
-            gate = '1'  # Entry = Gate 1 (Front Gate)
+            gate = '1'  # AUTO: Entry = Gate 1
             message_en = f"✅ Entry Allowed - Gate 1 ({num_people} persons)"
             message_hi = f"✅ प्रवेश की अनुमति - गेट 1 ({num_people} व्यक्ति)"
         else:
-            # Last was entry → This is EXIT
             scan_type = 'exit'
-            gate = '2'  # Exit = Gate 2 (Side Gate)
+            gate = '2'  # AUTO: Exit = Gate 2
             message_en = f"👋 Exit Recorded - Gate 2 ({num_people} persons)"
             message_hi = f"👋 बाहर जाने की अनुमति - गेट 2 ({num_people} व्यक्ति)"
 
         timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-        # Store scan
+        # Store scan with person count
         c.execute('''INSERT INTO scans VALUES (NULL, ?, ?, ?, ?, ?)''',
                   (family_id, scan_type, timestamp, gate, num_people))
         conn.commit()
 
-        # Calculate totals
+        # Calculate total people counts
         c.execute("""
             SELECT 
-                COALESCE(SUM(CASE WHEN scan_type='entry' THEN person_count ELSE 0 END), 0),
-                COALESCE(SUM(CASE WHEN scan_type='exit' THEN person_count ELSE 0 END), 0)
+                COALESCE(SUM(CASE WHEN scan_type='entry' THEN person_count ELSE 0 END), 0) as total_entries,
+                COALESCE(SUM(CASE WHEN scan_type='exit' THEN person_count ELSE 0 END), 0) as total_exits
             FROM scans
         """)
         result = c.fetchone()
         total_entries = result[0] if result[0] else 0
         total_exits = result[1] if result[1] else 0
+        current_count = total_entries - total_exits
 
         conn.close()
 
@@ -170,10 +181,10 @@ def scan():
             'success': True,
             'family': data,
             'scan_type': scan_type,
-            'gate': gate,
+            'gate': gate,  # ADDED: Return gate info
             'message_en': message_en,
             'message_hi': message_hi,
-            'current_count': total_entries - total_exits,
+            'current_count': current_count,
             'total_entries': total_entries,
             'total_exits': total_exits,
             'persons_in_family': num_people,
@@ -181,19 +192,23 @@ def scan():
         })
 
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 400
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 400
 
 
-# Get stats
+# Get stats (WITH PERSON COUNTING)
 @app.route('/api/stats')
 def get_stats():
     conn = sqlite3.connect('attendance.db')
     c = conn.cursor()
 
+    # Get person counts instead of scan counts
     c.execute("""
         SELECT 
-            COALESCE(SUM(CASE WHEN scan_type='entry' THEN person_count ELSE 0 END), 0),
-            COALESCE(SUM(CASE WHEN scan_type='exit' THEN person_count ELSE 0 END), 0)
+            COALESCE(SUM(CASE WHEN scan_type='entry' THEN person_count ELSE 0 END), 0) as entries,
+            COALESCE(SUM(CASE WHEN scan_type='exit' THEN person_count ELSE 0 END), 0) as exits
         FROM scans
     """)
     result = c.fetchone()
@@ -220,7 +235,7 @@ def get_stats():
     })
 
 
-# Clear data
+# Clear data (requires dashboard access)
 @app.route('/api/reset', methods=['POST'])
 def reset():
     if not session.get('dashboard_access'):
