@@ -11,7 +11,7 @@ os.makedirs('temp_qr', exist_ok=True)
 QR_CONFIG = {
     "qr_x": 380,  # Moved right to center
     "qr_y": 480,  # Moved down to center
-    "qr_size": 480,  # Perfect scanning size
+    "qr_size": 400,  # Perfect scanning size
 }
 
 
